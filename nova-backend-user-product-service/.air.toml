@@ -1,0 +1,35 @@
+# .air.toml
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/user_product_service main.go"
+bin = "./tmp/user_product_service"
+full_bin = "APP_ENV=development ./tmp/user_product_service"
+
+exclude_dir = [
+  "tmp", "vendor", "testdata", "node_modules", "static", "assets", "frontend", "pkg"
+]
+
+watch_exts = ["go", "mod", "sum", "toml"]
+exclude_files = []
+
+stop_on_error = true
+send_interrupt = true
+poll = true
+poll_interval = 500
+delay = 1000
+
+[log]
+time = true
+
+[color]
+main = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"
+
+[misc]
+clean_on_exit = true
+livereload_backend = true

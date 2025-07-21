@@ -1,0 +1,309 @@
+syntax = "proto3";
+
+option go_package = "gen/go/user_product_service";
+
+package user_product_service; // Protobuf package name
+
+// -----------------------------------------------------------------------------
+// Service Definition: UserProductService
+// This service handles user profiles, banking products, and customer accounts.
+// -----------------------------------------------------------------------------
+
+// @Trigger: I think we can do all methods here, as doing separate services
+// for pockets, countrycode and verification seems unnecessary to me.
+service UserProductService {
+    // User Management
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc GetUserById(GetUserByIdRequest) returns (GetUserByIdResponse) {}
+    rpc GetUserByUsername(GetUserByUsernameRequest) returns (GetUserByUsernameResponse) {}
+    rpc UpdateUserById(UpdateUserByIdRequest) returns (UpdateUserByIdResponse) {}
+    rpc DeleteUserById(DeleteUserByIdRequest) returns (DeleteUserByIdResponse) {}
+
+    // Country Codes
+    rpc GetCountryCodes(GetCountryCodesRequest) returns (GetCountryCodesResponse) {}
+
+    // Favorites
+    rpc CreateFavorite(CreateFavoriteRequest) returns (CreateFavoriteResponse) {}
+    rpc GetFavoritesByUserId(GetFavoritesByUserIdRequest) returns (GetFavoritesByUserIdResponse) {}
+    rpc UpdateFavoriteById(UpdateFavoriteByIdRequest) returns (UpdateFavoriteByIdResponse) {}
+    rpc DeleteFavoriteById(DeleteFavoriteByIdRequest) returns (DeleteFavoriteByIdResponse) {}
+
+    // Pockets
+    rpc CreatePocket(CreatePocketRequest) returns (CreatePocketResponse) {}
+    rpc GetPocketsByUserId(GetPocketsByUserIdRequest) returns (GetPocketsByUserIdResponse) {}
+    rpc UpdatePocketById(UpdatePocketByIdRequest) returns (UpdatePocketByIdResponse) {}
+    rpc DeletePocketById(DeletePocketByIdRequest) returns (DeletePocketByIdResponse) {}
+
+    // Verifications
+    rpc GetVerificationsByUserId(GetVerificationsByUserIdRequest) returns (GetVerificationsByUserIdResponse) {}
+    rpc UpdateVerificationByUserId(UpdateVerificationByUserIdRequest) returns (UpdateVerificationByUserIdResponse) {}
+}
+
+// -----------------------------------------------------------------------------
+// Messages: Data Structures
+// -----------------------------------------------------------------------------
+
+// Country code data structure
+message CountryCode {
+    string id = 1;
+    string name = 2;
+    string code = 3;
+}
+
+// Favorite data structure
+message Favorite {
+    string id = 1;
+    string user_id = 2;
+    string favorite_user_id = 3;
+    string favorite_username = 4;
+    string alias = 5;
+}
+
+// Pocket data structure
+message Pocket {
+    string id = 1;
+    string user_id = 2;
+    string name = 3;
+    string category = 4;
+    int32 max_amount = 5;
+}
+
+// Verification data structure
+message Verification {
+    string id = 1;
+    string user_id = 2;
+    string type = 3;
+    string status = 4;
+}
+
+// User data structure
+message User {
+    string id = 1;
+    string email = 2;
+    string username = 3;
+    string phone = 4;
+    string first_name = 5;
+    string last_name = 6;
+    string birthdate = 7;
+    
+    // @trigger: Seems more natural to bring this information with the 
+    // user's information than on it's own in another data structure.
+    
+    // @Bat: I'm not altering verifications here but have them as "none" for now
+    string verification_type = 8;
+    string verification_status = 9;
+}
+
+// -----------------------------------------------------------------------------
+// Messages: Requests
+// -----------------------------------------------------------------------------
+
+// @Trigger: This is like the standard way to treat requests and responses.
+
+// Country codes
+message GetCountryCodesRequest {}
+
+// Users
+message CreateUserRequest {
+    string user_id = 1;
+    string email = 2;
+    string username = 3;
+    string code_id = 4;
+    string phone = 5;
+    string first_name = 6;
+    string last_name = 7;
+    string birthdate = 8;
+}
+
+message GetUserByIdRequest {
+    string user_id = 1;
+}
+
+message GetUserByUsernameRequest {
+    string username = 1;
+}
+
+message UpdateUserByIdRequest {
+    string id = 1;
+    string email = 2;
+    string username = 3;
+    string phone = 4;
+    string first_name = 5;
+    string last_name = 6;
+    string birthdate = 7;
+}
+
+message DeleteUserByIdRequest {
+    string id = 1;
+}
+
+// Favorites
+message CreateFavoriteRequest {
+    string user_id = 1;
+    string favorite_user_id = 2;
+    string alias = 3;
+}
+
+message GetFavoritesByUserIdRequest {
+    string user_id = 1;
+}
+
+message UpdateFavoriteByIdRequest {
+    string id = 1;
+    string alias = 2;
+}
+
+message DeleteFavoriteByIdRequest {
+    string id = 1;
+}
+
+//Pockets
+message CreatePocketRequest {
+    string user_id = 1;
+    string name = 2;
+    string category = 3;
+    int32 max_amount = 4;
+}
+
+message GetPocketsByUserIdRequest {
+    string user_id = 1;
+}
+
+message UpdatePocketByIdRequest {
+    string id = 1;
+    string name = 2;
+    string category = 3;
+    int32 max_amount = 4;
+}
+
+message DeletePocketByIdRequest {
+    string id = 1;
+}
+
+//Verifications
+message GetVerificationsByUserIdRequest {
+    string user_id = 1;
+}
+
+message UpdateVerificationByUserIdRequest {
+    string user_id= 1;
+    string type = 2;
+    string status = 3;
+}
+
+// @Trigger: requests above and responses above, to separate them better.
+// -----------------------------------------------------------------------------
+// Messages: Responses
+// -----------------------------------------------------------------------------
+
+// Country codes
+message GetCountryCodesResponse {
+    bool success = 1;
+    string message = 2;
+    repeated CountryCode codes = 3;
+}
+
+// Users
+message CreateUserResponse {
+    bool success = 1;
+    string message = 2;
+    string user_id = 3;
+}
+
+message GetUserByIdResponse {
+    bool success = 1;
+    string message = 2;
+    string email = 3;
+    string username = 4;
+    string phone = 5;
+    string first_name = 6;
+    string last_name = 7;
+    string birthdate = 8;
+}
+
+message GetUserByUsernameResponse {
+    bool success = 1;
+    string message = 2;
+    string email = 3;
+    string user_id = 4;
+}
+
+message UpdateUserByIdResponse {
+    bool success = 1;
+    string message = 2;
+    string email = 3;
+    string username = 4;
+    string phone = 5;
+    string first_name = 6;
+    string last_name = 7;
+    string birthdate = 8;
+}
+
+message DeleteUserByIdResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// Favorites
+message CreateFavoriteResponse {
+    bool success = 1;
+    string message = 2;
+    string favorite_id = 3;
+}
+
+message GetFavoritesByUserIdResponse {
+    bool success = 1;
+    string message = 2;
+    repeated Favorite favorites = 3;
+}
+
+message UpdateFavoriteByIdResponse {
+    bool success = 1;
+    string message = 2;
+    string new_alias = 3;
+}
+
+message DeleteFavoriteByIdResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+//Pockets
+message CreatePocketResponse {
+    bool success = 1;
+    string message = 2;
+    string pocket_id = 3;
+}
+
+message GetPocketsByUserIdResponse {
+    bool success = 1;
+    string message = 2;
+    repeated Pocket pockets = 3;
+}
+
+message UpdatePocketByIdResponse {
+    bool success = 1;
+    string message = 2;
+    string name = 3;
+    string category = 4;
+    int32 max_amount = 5;
+}
+
+message DeletePocketByIdResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+//Verifications
+message GetVerificationsByUserIdResponse {
+    bool success = 1;
+    string message = 2;
+    repeated Verification verifications = 3;
+}
+
+message UpdateVerificationByUserIdResponse {
+    bool success = 1;
+    string message = 2;
+    string type= 3;
+    string status = 4;
+}

@@ -1,0 +1,20 @@
+FROM golang:1.24
+
+WORKDIR /app
+
+# Install Air
+RUN go install github.com/cosmtrek/air@v1.40.4
+
+# Copy go.mod and go.sum first for caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the rest of the code
+COPY . .
+
+# Make sure the tmp dir exists and is writable
+RUN mkdir -p tmp && chmod -R 777 tmp
+
+EXPOSE 50052
+
+CMD ["air", "-c", ".air.toml"]

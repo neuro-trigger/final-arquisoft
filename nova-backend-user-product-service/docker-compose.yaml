@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ups
+    ports:
+      - "15432:5432"
+    volumes:
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
+  user_product_service:
+    image: user_product_service:5
+    ports:
+      - "50052:50052"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      DB_NAME: ups
+    entrypoint: >
+      sh -c "
+      until pg_isready -h db -p 5432; do
+        echo 'Waiting for Postgres...'; sleep 1;
+      done;
+      ./user_product_service"
+    restart: on-failure
