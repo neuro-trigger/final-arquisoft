@@ -45,8 +45,8 @@ export default function LoginPage() {
           // Store user data in AuthContext
           login(decodedToken);
           
-          // Redirect to home page
-          router.push('/home');
+          // Redirect to profile page
+          router.push('/profile');
         } else {
           console.error('Failed to decode token');
           setError("Error al procesar la autenticación");

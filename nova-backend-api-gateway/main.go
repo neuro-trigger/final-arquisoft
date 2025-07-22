@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,9 +20,21 @@ import (
 )
 
 func corsMiddleware(next http.Handler) http.Handler {
+	// Read allowed origins once at startup
+	raw := os.Getenv("ALLOWED_ORIGINS")
+	if raw == "" {
+		raw = "https://nova.dmirandam.com,http://localhost:3000"
+	}
+	allowed := map[string]struct{}{}
+	for _, o := range strings.Split(raw, ",") {
+		if o = strings.TrimSpace(o); o != "" {
+			allowed[o] = struct{}{}
+		}
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin == "https://nova.dmirandam.com" {
+		if _, ok := allowed[origin]; ok {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
@@ -29,7 +42,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-		if r.Method == "OPTIONS" {
+		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
@@ -54,20 +67,14 @@ func main() {
 	}
 	defer AuthClient.CloseConnection() // Ensure connection is closed when main exits.
 
-	TransactionClient, err := clients.NewTransactionServiceClient(cfg.TransactionServiceGRPCHost)
-	if err != nil {
-		log.Fatalf("Failed to create TransactionServiceClient: %v", err) //  Critical
-	}
-	defer TransactionClient.CloseConnection() // Ensure connection is closed when main exits.
-
 	// Set up HTTP router
 	router := mux.NewRouter()
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
 	// Initialize HTTP handlers
-	userProductHandler := handlers.NewUserProductHandler(userProductClient, TransactionClient, AuthClient)
+	userProductHandler := handlers.NewUserProductHandler(userProductClient, AuthClient)
 	AuthHandler := handlers.NewAuthHandler(AuthClient)
-	TransactionHandler := handlers.NewTransactionHandler(TransactionClient, userProductClient)
+	// Removed TransactionHandler := handlers.NewTransactionHandler(TransactionClient, userProductClient)
 
 	// Public routes (no authentication required)
 	apiRouter.HandleFunc("/country-codes", userProductHandler.GetCountryCodes).Methods(http.MethodGet)
@@ -76,8 +83,7 @@ func main() {
 	apiRouter.HandleFunc("/users/name/{username}", userProductHandler.GetUsername).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/login", AuthHandler.PostLogin).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/logout", AuthHandler.PostLogout).Methods(http.MethodPost)
-	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
-	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
+	// Removed balance and movements routes
 
 	// Protected routes (authentication required)
 	protectedRouter := apiRouter.PathPrefix("").Subrouter()
@@ -103,9 +109,7 @@ func main() {
 	protectedRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.GetVerificationsByUserId).Methods(http.MethodGet)
 	protectedRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.UpdateVerificationByUserId).Methods(http.MethodPut)
 
-	// Transaction routes
-	protectedRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost) //deprecated
-	protectedRouter.HandleFunc("/transfers", TransactionHandler.PostTransfer).Methods(http.MethodPost)
+	// Removed transaction routes
 
 	// Create HTTP server
 	server := &http.Server{

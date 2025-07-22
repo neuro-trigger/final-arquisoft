@@ -17,7 +17,7 @@ class ApiClient {
   private currentUserEmail: string | null = null;
 
   constructor(
-    baseUrl: string = process.env.NEXT_PUBLIC_API_URL || "https://nova.dmirandam.com"
+    baseUrl: string = process.env.NEXT_PUBLIC_API_URL ?? ""
   ) {
     this.baseUrl = baseUrl;
   }
@@ -231,104 +231,7 @@ class ApiClient {
     });
   }
 
-  // Transaction endpoints
-  async createAccount(
-    username: string,
-    isBank: boolean,
-    userId?: string
-  ): Promise<ApiResponse> {
-    const validUserId = this.validateUserId(userId || this.currentUserId);
-    return this.request<ApiResponse>("/api/account", {
-      method: "POST",
-      body: JSON.stringify({ user_id: validUserId, username, bank: isBank }),
-    });
-  }
-
-  async createTransfer(
-    toUser: string,
-    amount: number,
-    fromUser?: string,
-    
-  ): Promise<ApiResponse> {
-    const validFromUser = this.validateUserId(fromUser || this.currentUserId);
-    const validToUser = this.validateUserId(toUser);
-    const email = this.currentUserEmail;
-    return this.request<ApiResponse>("/api/transfers", {
-      method: "POST",
-      body: JSON.stringify({ from_user: validFromUser, to_user: validToUser, amount, email }),
-    });
-  }
-
-  async getBalance(
-    fromTime: number,
-    toTime: number,
-    userId?: string
-  ): Promise<BalanceResponse> {
-    const validUserId = this.validateUserId(userId || this.currentUserId);
-    const params = new URLSearchParams({
-      user_id: validUserId,
-      from_time: fromTime.toString(),
-      to_time: toTime.toString(),
-    });
-    return this.request<BalanceResponse>(`/api/balance?${params.toString()}`);
-  }
-
-  async addMoney(
-    amount: number,
-    to_user?: string
-  ): Promise<ApiResponse> {
-    const from_user = "00000000-0000-0000-0000-000000000001";
-    const validToUser = this.validateUserId(to_user || this.currentUserId);
-    const email = this.currentUserEmail;
-    if (!email) {
-      throw new Error("Current user email is required for this operation");
-    }
-    return this.request<ApiResponse>("/api/transfers", {
-      method: "POST",
-      body: JSON.stringify({
-        amount,
-        from_user,
-        to_user: validToUser,
-        email
-      })
-    });
-  }
-  
-  async reduceMoney(
-    amount: number
-  ): Promise<ApiResponse> {
-    const to_user = "00000000-0000-0000-0000-000000000001";
-    const from_user = this.validateUserId(this.currentUserId);
-    const email = this.currentUserEmail;
-    if (!email) {
-      throw new Error("Current user email is required for this operation");
-    }
-    return this.request<ApiResponse>("/api/transfers", {
-      method: "POST",
-      body: JSON.stringify({
-        amount,
-        from_user,
-        to_user,
-        email
-      })
-    });
-  }
-
-  async getMovements(
-    fromTime: number,
-    toTime: number,
-    limit: boolean,
-    userId?: string
-  ): Promise<MovementsResponse> {
-    const validUserId = this.validateUserId(userId || this.currentUserId);
-    const params = new URLSearchParams({
-      id: validUserId,
-      from: fromTime.toString(),
-      to: toTime.toString(),
-      lim: limit.toString(),
-    });
-    return this.request<MovementsResponse>(`/api/movements?${params.toString()}`);
-  }
+  // Transaction-related methods removed as transactions service was deprecated
 
 }
 

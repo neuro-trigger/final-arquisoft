@@ -3,29 +3,25 @@
 import { useEffect, useState } from "react";
 import UserProfile from "../../components/UserProfile";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { user, isAuthenticated, loading } = useAuth();
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // In a real application, you would get the userId from your authentication context
-    // This is just a placeholder implementation
-    const checkAuth = async () => {
-      try {
-        // You would typically get this from your auth context
-        // For now, we'll just use a mock user ID
-        setUserId("mock-user-id");
-      } catch (error) {
-        console.error("Authentication error:", error);
-        setError("Not authenticated");
-        router.push("/login");
-      }
-    };
+    if (loading) return; // wait until auth state resolved
 
-    checkAuth();
-  }, [router]);
+    if (!isAuthenticated || !user?.userID) {
+        setError("Not authenticated");
+      router.replace("/login");
+      return;
+      }
+
+    setUserId(user.userID);
+  }, [loading, isAuthenticated, user, router]);
 
   if (error) {
     return (

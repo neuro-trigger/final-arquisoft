@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/common"
@@ -16,20 +14,17 @@ import (
 
 	// Import from common-protos
 	ab "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
-	tb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/transaction_service"
 	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/user_product_service"
 )
 
 type UserProductHandler struct {
 	UserProductClient *clients.UserProductServiceClient
-	TransactionClient *clients.TransactionServiceClient
 	AuthClient        *clients.AuthServiceClient
 }
 
-func NewUserProductHandler(userClient *clients.UserProductServiceClient, transactionClient *clients.TransactionServiceClient, authClient *clients.AuthServiceClient) *UserProductHandler {
+func NewUserProductHandler(userClient *clients.UserProductServiceClient, authClient *clients.AuthServiceClient) *UserProductHandler {
 	return &UserProductHandler{
 		UserProductClient: userClient,
-		TransactionClient: transactionClient,
 		AuthClient:        authClient,
 	}
 }
@@ -93,12 +88,6 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 	userID := authResp.Data
 	log.Println("User created in auth service with ID:", userID)
-	grpcReqTB := &tb.CreateAccountRequest{
-		UserId:   userID,
-		Username: reqBody.Username,
-		Bank:     false,
-	}
-
 	grpcReqUS := &pb.CreateUserRequest{
 		UserId:    userID,
 		Email:     reqBody.Email,
@@ -109,39 +98,10 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 		LastName:  reqBody.LastName,
 		Birthdate: reqBody.Birthdate,
 	}
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	var userResp *pb.CreateUserResponse
-	var userErr error
-	var tbErr error
-
-	go func() {
-		defer wg.Done()
-		userResp, userErr = h.UserProductClient.Client.CreateUser(ctx, grpcReqUS)
-	}()
-
-	go func() {
-		defer wg.Done()
-		_, tbErr = h.TransactionClient.Client.Account(ctx, grpcReqTB)
-		if tbErr != nil {
-			log.Println("Error creating account: ", tbErr)
-		}
-	}()
-
-	wg.Wait()
-
+	userResp, userErr := h.UserProductClient.Client.CreateUser(ctx, grpcReqUS)
 	if userErr != nil {
-		defer cancel()
-		log.Println("Error creating user:", userErr)
+		log.Println("Error creating user profile:", userErr)
 		common.RespondGrpcError(w, userErr)
-		return
-	}
-	if tbErr != nil {
-		defer cancel()
-		log.Println("Error creating account v2:", tbErr)
-		common.RespondGrpcError(w, tbErr)
 		return
 	}
 
@@ -489,51 +449,16 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
 		MaxAmount: reqBody.MaxAmount,
 	}
 
-	grpcReqTB := &tb.CreateAccountRequest{
-		UserId:   uuid.New().String(), // Generate a new UUID for the account
-		Username: reqBody.Username,
-		Bank:     false,
-	}
-	log.Println("User: ", grpcReqUS.UserId, grpcReqUS.Category)
-	log.Println("Trans: ", grpcReqTB.UserId, grpcReqTB.Username)
-
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	var pocketResp *pb.CreatePocketResponse
-	var pocketErr error
-	var tbErr error
-	go func() {
-		defer wg.Done()
-		pocketResp, pocketErr = h.UserProductClient.Client.CreatePocket(ctx, grpcReqUS)
-	}()
-	go func() {
-		defer wg.Done()
-		_, tbErr = h.TransactionClient.Client.Account(ctx, grpcReqTB)
-		if tbErr != nil {
-			log.Println("Error creating pocket account: ", tbErr)
-			defer cancel()
-			return
-		}
-	}()
-	wg.Wait()
-
+	pocketResp, pocketErr := h.UserProductClient.Client.CreatePocket(ctx, grpcReqUS)
 	if pocketErr != nil {
-		log.Println("Error creating pocket: ", pocketErr)
+		log.Println("Error creating pocket:", pocketErr)
 		common.RespondGrpcError(w, pocketErr)
-		defer cancel()
-		return
-	}
-	if tbErr != nil {
-		log.Println("Error creating pocket account v2:", tbErr)
-		common.RespondGrpcError(w, tbErr)
-		defer cancel()
 		return
 	}
 
-	httpResp := transformers.CreatePocketRespJSON(pocketResp) // Create this in transformers
+	httpResp := transformers.CreatePocketRespJSON(pocketResp)
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
 	defer cancel()
 

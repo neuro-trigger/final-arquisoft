@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
   // Redirect logic
   if (isPublicPath && token) {
     // If user is logged in and tries to access login/register, redirect to home
-    return NextResponse.redirect(new URL('/home', request.url));
+    return NextResponse.redirect(new URL('/profile', request.url));
   }
 
   if (!isPublicPath && !token) {
@@ -31,7 +31,7 @@ export const config = {
     '/',
     '/login',
     '/register',
-    '/home/:path*',
+    '/profile',
     '/profile/:path*',
   ],
 }; 

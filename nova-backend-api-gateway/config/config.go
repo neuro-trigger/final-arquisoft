@@ -12,7 +12,6 @@ type Config struct {
 	APIGatewayPort             string
 	UserProductServiceGRPCHost string
 	AuthServiceGRPCHost        string
-	TransactionServiceGRPCHost string
 }
 
 // Gets the .env values or returns a default one.
@@ -34,6 +33,5 @@ func LoadConfig() *Config {
 		APIGatewayPort:             getEnv("API_GATEWAY_PORT", "8080"),
 		UserProductServiceGRPCHost: getEnv("USER_PRODUCT_SERVICE_GRPC_HOST", "localhost:50052"),
 		AuthServiceGRPCHost:        getEnv("AUTH_SERVICE_GRPC_HOST", "localhost:50053"),
-		TransactionServiceGRPCHost: getEnv("TRANSACTION_SERVICE_GRPC_HOST", "localhost:50051"),
 	}
 }

@@ -27,20 +27,8 @@ const Header = () => {
             </Link>
             {isAuthenticated && (
               <nav className="hidden md:flex space-x-6">
-                <Link href="/home" className="hover:text-gray-200 font-medium">
-                  Home
-                </Link>
-                <Link
-                  href="#pockets-section"
-                  className="hover:text-gray-200 font-medium"
-                >
-                  Bolsillos
-                </Link>
-                <Link
-                  href="#transactions-section"
-                  className="hover:text-gray-200 font-medium"
-                >
-                  Transacciones
+                <Link href="/profile" className="hover:text-gray-200 font-medium">
+                  Perfil
                 </Link>
                 
               </nav>

@@ -10,9 +10,11 @@ import (
 
 // InitializeCollections sets up the MongoDB collections with proper validation
 func InitializeCollectionsV2(ctx context.Context, db *mongo.Database) error {
-	// Drop existing collection if it exists
-	if err := db.Collection("users").Drop(ctx); err != nil {
-		return err
+	// Ensure collection exists; do NOT drop data in non-dev environments
+	if names, _ := db.ListCollectionNames(ctx, bson.M{"name": "users"}); len(names) == 0 {
+		// create with validation below
+	} else {
+		return nil // collection already exists, skip re-creation
 	}
 
 	// Create users collection with schema validation

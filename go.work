@@ -1,0 +1,10 @@
+go 1.24
+
+use (
+    ./nova-backend-common-protos
+    ./nova-backend-auth-service
+    ./nova-backend-user-product-service
+    ./nova-backend-api-gateway
+)
+
+replace github.com/software-architecture-proj/nova-backend-common-protos => ./nova-backend-common-protos 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
@@ -50,14 +51,22 @@ func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
 	httpResp := transformers.LoginRespJSON(grpcResp)
 
 	token := httpResp["data"].(string)
+
+	// Enable Secure cookies only in production (ENV=prod)
+	prod := os.Getenv("ENV") == "prod"
+	sameSite := http.SameSiteNoneMode
+	if !prod {
+		sameSite = http.SameSiteLaxMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "accessToken",
 		Value:    token,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   prod,
 		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-		MaxAge:   900, // 15 minutes in seconds to match exp claim
+		SameSite: sameSite,
+		MaxAge:   900, // 15 minutes
 	})
 
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
@@ -67,14 +76,22 @@ func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
 // Logout
 func (h *AuthHandler) PostLogout(w http.ResponseWriter, r *http.Request) {
 	httpResp := transformers.LogOutRespJSON()
+
+	prod := os.Getenv("ENV") == "prod"
+	sameSite := http.SameSiteNoneMode
+	if !prod {
+		sameSite = http.SameSiteLaxMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "accessToken",
 		Value:    "",
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   prod,
 		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
 	})
 
 	common.RespondWithJSON(w, http.StatusOK, httpResp)

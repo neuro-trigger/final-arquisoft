@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────── Databases ───────────────────────────────
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ups
+    ports:
+      - "15432:5432"
+    volumes:
+      - ./nova-backend-user-product-service/config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    command: mongod --auth --bind_ip_all
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: auth_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  # ─────────────────────────────── Backend Services ────────────────────────
+  auth_service:
+    build:
+      context: ./nova-backend-auth-service
+      dockerfile: Dockerfile
+    depends_on:
+      - mongodb
+    environment:
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/auth_db?authSource=admin
+      MONGODB_DATABASE: auth_db
+    ports:
+      - "50053:50053"
+    restart: on-failure
+
+  user_product_service:
+    build:
+      context: ./nova-backend-user-product-service
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      DB_NAME: ups
+    ports:
+      - "50052:50052"
+    restart: on-failure
+
+  api_gateway:
+    build:
+      context: ./nova-backend-api-gateway
+      dockerfile: Dockerfile
+    depends_on:
+      - user_product_service
+      - auth_service
+    environment:
+      API_GATEWAY_PORT: 8080
+      USER_PRODUCT_SERVICE_GRPC_HOST: user_product_service:50052
+      AUTH_SERVICE_GRPC_HOST: auth_service:50053
+      ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "8080:8080"
+    restart: on-failure
+
+  # ─────────────────────────────── Frontend ────────────────────────────────
+  frontend:
+    build:
+      context: ./nova-frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ""
+    depends_on:
+      - api_gateway
+    environment:
+      NEXT_PUBLIC_API_URL: ""
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  mongodb_data: 
