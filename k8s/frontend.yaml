@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: nova
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: web
+        image: us-central1-docker.pkg.dev/final-arquisoft/nova/frontend:latest # replace us-central1-docker.pkg.dev/final-arquisoft/nova
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: ""
+        resources:
+          requests:
+            cpu: 50m       # Request 0.05 CPU core (frontend is lighter)
+            memory: 64Mi   # Request 64MB RAM
+          limits:
+            cpu: 200m      # Limit to 0.2 CPU core
+            memory: 256Mi  # Limit to 256MB RAM
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: nova
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 3000 

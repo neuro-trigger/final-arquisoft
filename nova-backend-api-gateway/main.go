@@ -69,6 +69,15 @@ func main() {
 
 	// Set up HTTP router
 	router := mux.NewRouter()
+	// Health-check endpoints so LB sees backend healthy
+	router.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+	router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
 	// Initialize HTTP handlers

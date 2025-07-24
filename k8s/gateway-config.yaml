@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-env
+  namespace: nova
+data:
+  ENV: "prod"
+  USER_PRODUCT_SERVICE_GRPC_HOST: "user-product-svc:50052"
+  AUTH_SERVICE_GRPC_HOST: "auth-svc:50053"
+  ALLOWED_ORIGINS: "https://nova.example.com" 

@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: nova-cert
+  namespace: nova
+spec:
+  domains:
+  - 34-49-196-23.nip.io 

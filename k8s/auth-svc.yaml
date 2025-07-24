@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-svc
+  namespace: nova
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth
+        image: us-central1-docker.pkg.dev/final-arquisoft/nova/auth-svc:latest # replace us-central1-docker.pkg.dev/final-arquisoft/nova
+        ports:
+        - containerPort: 50053
+        env:
+        - name: ENV
+          value: "prod"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: db-creds
+              key: MONGO_URI
+        - name: MONGODB_DATABASE
+          value: "auth_db"
+        resources:
+          requests:
+            cpu: 100m      # Request 0.1 CPU core
+            memory: 128Mi  # Request 128MB RAM
+          limits:
+            cpu: 300m      # Limit to 0.3 CPU core
+            memory: 256Mi  # Limit to 256MB RAM
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-svc
+  namespace: nova
+spec:
+  type: ClusterIP
+  selector:
+    app: auth
+  ports:
+  - port: 50053
+    targetPort: 50053 
